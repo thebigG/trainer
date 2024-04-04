@@ -4,6 +4,8 @@
 #include <thread>
 #include <vector>
 
+#include <sstream>
+
 #include "../common/utils.hpp"
 
 #include "simpleble/SimpleBLE.h"
@@ -140,6 +142,20 @@ Received: 14 00 11 00 73 34 48 00 00 00 5c 35
 I believe, if I'm interpreting the HEX right, then 11th is what we're interested in and  bytes [1,3) are power.
 */
 
+uint16_t getPower(SimpleBLE::ByteArray& bytes)
+{
+    uint16_t power = 0;
+    uint8_t  firstByte = (uint8_t)bytes.at(1);
+    uint8_t  secondByte = (uint8_t)bytes.at(2);
+    uint8_t* powerData = (uint8_t*)&power;
+
+
+    powerData[1] = firstByte;
+    powerData[0] = secondByte;
+
+    return power;
+}
+
 int main() {
     auto adapter_optional = Utils::getAdapter();
 
@@ -200,10 +216,13 @@ int main() {
     // Subscribe to the characteristic.
     peripheral.notify(uuids[selection.value()].first, uuids[selection.value()].second, [&](SimpleBLE::ByteArray bytes) {
         std::cout << "Received: ";
-        Utils::print_byte_array(bytes);
+        Utils::print_byte_array(bytes, true);
+        std::cout << std::dec << "Power:" << getPower(bytes)<< " Watts" << std::endl;
     });
 
-    std::this_thread::sleep_for(500s);
+    //std::this_thread::sleep_for(500s);
+
+    while (true);
 
     peripheral.unsubscribe(uuids[selection.value()].first, uuids[selection.value()].second);
 
